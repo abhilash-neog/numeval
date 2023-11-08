@@ -1,0 +1,5 @@
+{
+   "model_name": "xlm-roberta-base",
+   "file": "Train_Numerical_Reasoning.json",
+   "path": "./NumEval - Task 3/"
+}
