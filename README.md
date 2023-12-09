@@ -30,10 +30,10 @@ python numhg_eval.py --tgt_path "path_to_labels.txt" --pre_path "path_to_predict
 
 ## Notebooks
 
-### numerical_generation_mlm_fine_tune.ipynb
+#### numerical_generation_mlm_fine_tune.ipynb
 This implements the proposed approach of performing Masked fine-tuning for numerical value generation
 
-### numerical_generation_zero_shot.ipynb
+#### numerical_generation_zero_shot.ipynb
 This notebook contains zero-shot application of xlm-roberta for numerical generation.
 <br>
 **Note**: Notebooks are independent. Please update the data directories accordingly
