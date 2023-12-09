@@ -5,11 +5,13 @@ import os
 import json
 import nltk
 import numpy as np
+from datetime import datetime
 from datasets import load_dataset, load_metric
-from transformers import AutoTokenizer, BartForConditionalGeneration, BartTokenizer
+from transformers import AutoTokenizer, BartForConditionalGeneration, BartTokenizer 
 from transformers import AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, Seq2SeqTrainer
 
 nltk.download('punkt')
+os.environ["WANDB_PROJECT"] = 'NLP'
 
 train_path = '/fastscratch/mridul/numeval/Train_Headline_Generation.json'
 dev_path = '/fastscratch/mridul/numeval/Dev_Headline_Generation.json'
@@ -39,6 +41,7 @@ ds = load_dataset("json", data_files=data_files)
 # })
 
 model_checkpoint = "t5-large"
+model_save_name = 't5_5e-5_epoch15'
 tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 def model_init():
     return AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint).to(device)
@@ -63,28 +66,29 @@ def preprocess_data(examples):
 tokenized_datasets = ds.map(preprocess_data, batched=True)
 
 batch_size = 16
-# model_name = "t5-small"
-model_dir = f"/fastscratch/mridul/numeval/models/{model_checkpoint}"
+model_dir = f"/fastscratch/mridul/numeval/models/{model_save_name}"
 
 args = Seq2SeqTrainingArguments(
     model_dir,
     evaluation_strategy="steps",
-    eval_steps=800,
+    eval_steps=400,
     logging_strategy="steps",
     logging_steps=100,
     save_strategy="steps",
-    save_steps=800,
-    learning_rate=4e-5,
+    save_steps=400,
+    learning_rate=5e-5,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
-    weight_decay=0.01,
+    weight_decay=0.03,
+    warmup_steps=1300,
     save_total_limit=3,
-    num_train_epochs=1,
+    num_train_epochs=15,
     predict_with_generate=True,
     # fp16=True,
     load_best_model_at_end=True,
-    metric_for_best_model="rouge1"
-    # report_to="tensorboard"
+    metric_for_best_model="rouge1",
+    report_to="wandb",
+    run_name=f"{model_save_name}-{datetime.now().strftime('%Y-%m-%d-%H-%M')}"
 )
 
 
