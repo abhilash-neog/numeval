@@ -17,7 +17,7 @@ Please adjust the `data` and `model` save path
 
 Similarly, `run_t5-3b.py` for running T5-3B model.
 
-## Llama 2 - 7B
+### Llama 2 - 7B
 Use `zero_shot_llama2.py` to run the zero-shot and few-shot performance for llama2.
 
 Please adjust the `data` and `predictions` save path
@@ -27,3 +27,14 @@ Use `numhg_eval.py` for evaluating the predictions
 ```
 python numhg_eval.py --tgt_path "path_to_labels.txt" --pre_path "path_to_predictions.txt" --num_gt_path "path_to_numerical_gt.txt"
 ```
+
+## Notebooks
+
+### numerical_generation_mlm_fine_tune.ipynb
+This implements the proposed approach of performing Masked fine-tuning for numerical value generation
+
+### numerical_generation_zero_shot.ipynb
+This notebook contains zero-shot application of xlm-roberta for numerical generation.
+<br>
+**Note**: Notebooks are independent. Please update the data directories accordingly
+
