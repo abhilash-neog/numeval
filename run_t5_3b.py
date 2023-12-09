@@ -7,15 +7,15 @@ import nltk
 import numpy as np
 from datetime import datetime
 from datasets import load_dataset, load_metric
-from transformers import AutoTokenizer, BartForConditionalGeneration, BartTokenizer 
+from transformers import AutoTokenizer, BartForConditionalGeneration, BartTokenizer, AutoConfig
 from transformers import AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, Seq2SeqTrainer
 
 nltk.download('punkt')
 os.environ["WANDB_PROJECT"] = 'NLP'
 
+
 train_path = '/fastscratch/mridul/numeval/Train_Headline_Generation.json'
 dev_path = '/fastscratch/mridul/numeval/Dev_Headline_Generation.json'
-
 
 data_files = {'train': train_path, 'validation': dev_path}
 ds = load_dataset("json", data_files=data_files)
@@ -31,18 +31,25 @@ ds = load_dataset("json", data_files=data_files)
 #     })
 # })
 
-model_checkpoint = "t5-large"
-model_save_name = 't5_5e-5_epoch15'
-batch_size = 16
-model_dir = f"/fastscratch/mridul/numeval/models/{model_save_name}"
-tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-def model_init():
-    return AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint).to(device)
-
 prefix = "summarize: "
 max_input_length = 512
 max_target_length = 32
 device = 'cuda'
+
+model_checkpoint = "t5-3b"
+model_save_name = 't5_3b_5e-5_epoch15_dropout0.3_warm50k'
+run_name = f"{model_save_name}-{datetime.now().strftime('%Y-%m-%d-%H-%M')}"
+batch_size = 4
+model_dir = f"/fastscratch/mridul/numeval/models/{run_name}"
+
+tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+def model_init():
+
+    config = AutoConfig.from_pretrained(model_checkpoint)
+    config.dropout = 0.3 
+    return AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint, config=config).to(device)
+
+
 
 def preprocess_data(examples):
     inputs = [prefix + text for text in examples["news"]]
@@ -57,30 +64,32 @@ def preprocess_data(examples):
     return model_inputs
 
 tokenized_datasets = ds.map(preprocess_data, batched=True)
-data_collator = DataCollatorForSeq2Seq(tokenizer)
 
 args = Seq2SeqTrainingArguments(
     model_dir,
     evaluation_strategy="steps",
-    eval_steps=400,
+    eval_steps=2400,
     logging_strategy="steps",
     logging_steps=100,
     save_strategy="steps",
-    save_steps=400,
+    save_steps=2400,
     learning_rate=5e-5,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
-    weight_decay=0.03,
-    warmup_steps=1300,
+    weight_decay=0.01,
+    warmup_steps=50000,
     save_total_limit=3,
-    num_train_epochs=15,
+    num_train_epochs=25,
     predict_with_generate=True,
     # fp16=True,
     load_best_model_at_end=True,
     metric_for_best_model="rouge1",
     report_to="wandb",
-    run_name=f"{model_save_name}-{datetime.now().strftime('%Y-%m-%d-%H-%M')}"
+    run_name=run_name
 )
+
+
+data_collator = DataCollatorForSeq2Seq(tokenizer)
 
 def compute_metrics(eval_pred):
     metric = load_metric("rouge")
