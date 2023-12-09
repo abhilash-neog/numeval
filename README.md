@@ -4,6 +4,11 @@ Mridul Khurana, Abhilash Neog, Aruj Nayak
 
 CS 5624: Natural Language Processing
 
+## Install the Requirements from
+```
+requirements.txt
+```
+
 ## Model Running
 
 ### T5
